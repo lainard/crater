@@ -9,16 +9,18 @@ services:
       context: ./
       dockerfile: Dockerfile
     image: crater-php
+    container_name: aditum_app
     restart: unless-stopped
     working_dir: /var/www/
     volumes:
       - ./:/var/www
       - ./docker-compose/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:rw,delegated
     networks:
-      - crater
+      - aditum
 
   db:
     image: mariadb
+    container_name: aditum_db
     restart: always
     volumes:
       - db:/var/lib/mysql
@@ -33,31 +35,33 @@ services:
     ports:
       - '33006:3306'
     networks:
-      - crater
+      - aditum
 
   nginx:
     image: nginx:1.17-alpine
+    container_name: aditum_nginx
     restart: unless-stopped
     ports:
-      - 80:80
+      - 8085:80
     volumes:
       - ./:/var/www
       - ./docker-compose/nginx:/etc/nginx/conf.d/
     networks:
-      - crater
+      - aditum
 
   cron:
+    container_name: aditum_cron
     build:
       context: ./
       dockerfile: ./docker-compose/cron.dockerfile
     volumes:
       - ./:/var/www
     networks:
-      - crater
+      - aditum
 
 volumes:
   db:
 
 networks:
-  crater:
+  aditum:
     driver: bridge
