@@ -305,10 +305,19 @@
             padding-left: 0;
         }
 
+        .footer {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            background-color: blue;
+            color: white;
+            text-align: center;
+        }
     </style>
 
     @if (App::isLocale('th'))
-        @include('app.pdf.locale.th')
+    @include('app.pdf.locale.th')
     @endif
 </head>
 
@@ -318,9 +327,9 @@
             <tr>
                 <td width="50%" class="header-section-left">
                     @if ($logo)
-                        <img class="header-logo" style="height: 50px;" src="{{ $logo }}" alt="Company Logo">
+                    <img class="header-logo" style="height: 50px;" src="{{ $logo }}" alt="Company Logo">
                     @else
-                        <h1 class="header-logo"> {{ $invoice->customer->company->name }} </h1>
+                    <h1 class="header-logo"> {{ $invoice->customer->company->name }} </h1>
                     @endif
                 </td>
                 <td width="50%" class="text-right company-address-container company-address">
@@ -337,11 +346,11 @@
             <div class="customer-address-container">
                 <div class="billing-address-container billing-address">
                     @if ($billing_address)
-                        <b>@lang('pdf_bill_to')</b> <br>
-                        {!! $billing_address !!}
+                    <b>@lang('pdf_bill_to')</b> <br>
+                    {!! $billing_address !!}
                     @endif
                 </div>
-<!--
+                <!--
                 <div @if ($billing_address !== '</br>') class="shipping-address-container shipping-address" @else class="shipping-address-container--left shipping-address" @endif>
                     @if ($shipping_address)
                         <b>@lang('pdf_ship_to')</b> <br>
@@ -375,11 +384,11 @@
 
         <div class="notes">
             @if ($notes)
-                <div class="notes-label">
-                    @lang('pdf_notes')
-                </div>
+            <div class="notes-label">
+                @lang('pdf_notes')
+            </div>
 
-                {!! $notes !!}
+            {!! $notes !!}
             @endif
         </div>
     </div>

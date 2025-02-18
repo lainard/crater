@@ -38,7 +38,7 @@
         .header-logo {
 
             text-transform: capitalize;
-            color: #817AE3;
+            color: #363d45;
             padding-top: 0px;
         }
 
@@ -52,7 +52,7 @@
             margin-top: 12px;
             font-size: 12px;
             line-height: 15px;
-            color: #595959;
+            color: #363d45;
             word-wrap: break-word;
         }
 
@@ -86,7 +86,7 @@
         .shipping-address {
             font-size: 10px;
             line-height: 15px;
-            color: #595959;
+            color: #363d45;
             margin-top: 5px;
             width: 160px;
             word-wrap: break-word;
@@ -102,7 +102,7 @@
         .billing-address {
             font-size: 10px;
             line-height: 15px;
-            color: #595959;
+            color: #363d45;
             margin-top: 5px;
             width: 160px;
             word-wrap: break-word;
@@ -120,7 +120,7 @@
             font-size: 12px;
             line-height: 18px;
             text-align: left;
-            color: #55547A
+            color: #363d45
         }
 
         .attribute-value {
@@ -147,7 +147,7 @@
             text-align: center;
             color: rgba(0, 0, 0, 0.85);
             padding: 5px;
-            color: #55547A;
+            color: #363d45;
         }
 
         tr.item-table-heading-row th {
@@ -166,11 +166,11 @@
             text-align: center;
             padding: 5px;
             padding-top: 10px;
-            color: #040405;
+            color: #363d45;
         }
 
         .item-description {
-            color: #595959;
+            color: #363d45;
             font-size: 9px;
             line-height: 12px;
         }
@@ -304,6 +304,16 @@
         .pl-0 {
             padding-left: 0;
         }
+        .footer {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            background:rgba(54,61,69,255);
+            color: white;
+            text-align: center;
+            font-size: 12px;
+        }
 
     </style>
 
@@ -318,7 +328,7 @@
             <tr>
                 <td width="50%" class="header-section-left">
                     @if ($logo)
-                        <img class="header-logo" style="height: 50px;" src="{{ $logo }}" alt="Company Logo">
+                        <img class="header-logo" style="height: 135px;" src="{{ $logo }}" alt="Aditum IT">
                     @else
                         <h1 class="header-logo"> {{ $invoice->customer->company->name }} </h1>
                     @endif
@@ -339,13 +349,6 @@
                     @if ($billing_address)
                         <b>@lang('pdf_bill_to')</b> <br>
                         {!! $billing_address !!}
-                    @endif
-                </div>
-
-                <div @if ($billing_address !== '</br>') class="shipping-address-container shipping-address" @else class="shipping-address-container--left shipping-address" @endif>
-                    @if ($shipping_address)
-                        <b>@lang('pdf_ship_to')</b> <br>
-                        {!! $shipping_address !!}
                     @endif
                 </div>
                 <div style="clear: both;"></div>
@@ -382,6 +385,7 @@
             @endif
         </div>
     </div>
+    @include('app.pdf.invoice.partials.footer')
 </body>
 
 </html>

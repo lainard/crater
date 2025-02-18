@@ -42,7 +42,7 @@ services:
     container_name: aditum_nginx
     restart: unless-stopped
     ports:
-      - 8085:80
+      - 80:80
     volumes:
       - ./:/var/www
       - ./docker-compose/nginx:/etc/nginx/conf.d/
