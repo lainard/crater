@@ -8,6 +8,7 @@ use Crater\Models\CompanySetting;
 use Crater\Models\FileDisk;
 use Illuminate\Support\Facades\App;
 
+
 trait GeneratesPdfTrait
 {
     public function getGeneratedPDFOrStream($collection_name)

@@ -33,6 +33,7 @@ Route::get('/modules/scripts/{script}', ScriptController::class);
 
 Route::post('login', [LoginController::class, 'login']);
 
+
 Route::post('auth/logout', function () {
     Auth::guard('web')->logout();
 });

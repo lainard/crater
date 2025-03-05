@@ -358,7 +358,7 @@
                 <table>
                     <tr>
                         <td class="attribute-label">@lang('pdf_invoice_number')</td>
-                        <td class="attribute-value"> &nbsp;{{ $invoice->invoice_number }}</td>
+                        <td class="attribute-value"> &nbsp;<b>{{ $invoice->invoice_number }}</b></td>
                     </tr>
                     <tr>
                         <td class="attribute-label">@lang('pdf_invoice_date')</td>
@@ -376,14 +376,31 @@
         @include('app.pdf.invoice.partials.table')
 
         <div class="notes">
-            @if ($notes)
+            
                 <div class="notes-label">
                     @lang('pdf_notes')
                 </div>
-
+                 <br />
                 {!! $notes !!}
-            @endif
+                <br />
+                <br />
+                Gelieve de betaling uit te voeren naar het volgende gegevens: <br />
+                Naam: <b>Aditum IT</b><br />
+                IBAN: <b>BE24 9052 8687 0938</b> <br />
+                met de volgende referentie: <b>+++{!! $ogm !!}+++</b>
+
+          
+                <br /><br />
+                <i>Scan de volgende QR-code om te betalen met Bancontact of je Bankapp.</i>
+                <br />
+                <br />
+                  <img src="{!! $qrcode !!}" height="135">
         </div>
+    
+      
+
+
+
     </div>
     @include('app.pdf.invoice.partials.footer')
 </body>

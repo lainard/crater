@@ -23,3 +23,6 @@ class InvoicePdfController extends Controller
         return $invoice->getGeneratedPDFOrStream('invoice');
     }
 }
+/*
+   
+*/

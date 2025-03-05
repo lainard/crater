@@ -3,8 +3,8 @@ FROM php:8.1-fpm
 # Arguments defined in docker-compose.yml
 ARG user
 ARG uid
-
 # Install system dependencies
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -18,7 +18,6 @@ RUN apt-get update && apt-get install -y \
     mariadb-client
 
 # Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN pecl install imagick \
     && docker-php-ext-enable imagick

@@ -17,6 +17,7 @@ use Nwidart\Modules\Facades\Module;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Vinkla\Hashids\Facades\Hashids;
+use SepaQr\SepaQr;
 
 class Invoice extends Model implements HasMedia
 {
@@ -566,8 +567,19 @@ class Invoice extends Model implements HasMedia
         $customFields = CustomField::where('model_type', 'Item')->get();
 
         App::setLocale($locale);
-
+        $ogm = $this->ogm(self::find($this->id)->invoice_number);
         $logo = $company->logo_path;
+        $sepaQr = new SepaQr();
+
+        $sepaQr
+          ->setName('Aditum IT')
+          ->setIban('BE24905286870938')
+          ->setAmount(self::find($this->id)->total/100) // The amount in Euro
+          ->setRemittanceReference($ogm)
+          ->setSize(300);
+
+
+
 
         view()->share([
             'invoice' => $this,
@@ -578,7 +590,13 @@ class Invoice extends Model implements HasMedia
             'notes' => $this->getNotes(),
             'logo' => $logo ?? null,
             'taxes' => $taxes,
+            'qrcode' => $sepaQr->writeDataUri(),
+            'ogm' => $ogm
         ]);
+
+
+
+
 
         if (request()->has('preview')) {
             return view('app.pdf.invoice.'.$invoiceTemplate);
@@ -586,7 +604,25 @@ class Invoice extends Model implements HasMedia
 
         return PDF::loadView('app.pdf.invoice.'.$invoiceTemplate);
     }
+    public function ogm($v){
+    // getallen uithalen
+    $v =  preg_replace('~\D~', '', $v);
+    // neem eerste 10 cijfers
+    $v = substr( $v , 0 , 10);
+    // 00 toevoegen
+    $v = sprintf("%010s", $v);
+    // rest berekenen
+    $rest = abs($v) % 97;
+    // indien 0 wordt het 97
+    if ( abs($rest) == 0 ){ $rest = 97; }
+    // indien <10 wordt een 0 voor de restwaarde gezet
+    $rest = sprintf("%02s", $rest);
+    $v = substr( $v , 0 , 3 )."/".substr( $v , 3 , 4 )."/".substr( $v , 7 , 3 ).$rest;
+    return $v;
+}
 
+
+    
     public function getEmailAttachmentSetting()
     {
         $invoiceAsAttachment = CompanySetting::getSetting('invoice_email_attachment', $this->company_id);

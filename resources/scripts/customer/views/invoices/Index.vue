@@ -99,6 +99,12 @@
           >
             {{ row.data.invoice_number }}
           </router-link>
+          <router-link
+            :to="{ path: `invoices/${row.data.id}/pay` }"
+            class="font-medium text-primary-500"
+          >
+            {{ row.data.invoice_number }}
+          </router-link>
         </template>
 
         <template #cell-due_amount="{ row }">
@@ -129,6 +135,12 @@
               <BaseIcon name="DotsHorizontalIcon" class="h-5 text-gray-500" />
             </template>
             <router-link :to="`invoices/${row.data.id}/view`">
+              <BaseDropdownItem>
+                <BaseIcon name="EyeIcon" class="h-5 mr-3 text-gray-600" />
+                {{ $t('general.view') }}
+              </BaseDropdownItem>
+            </router-link>
+             <router-link :to="`invoices/${row.data.id}/pay`">
               <BaseDropdownItem>
                 <BaseIcon name="EyeIcon" class="h-5 mr-3 text-gray-600" />
                 {{ $t('general.view') }}
@@ -273,3 +285,4 @@ async function fetchData({ page, sort }) {
   }
 }
 </script>
+<!--- test -->

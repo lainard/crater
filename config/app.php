@@ -170,6 +170,7 @@ return [
         Crater\Providers\DropboxServiceProvider::class,
         Crater\Providers\ViewServiceProvider::class,
         Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider::class,
+        FruitCake\Cors\CorsServiceProvider::class,
     ],
 
     /*

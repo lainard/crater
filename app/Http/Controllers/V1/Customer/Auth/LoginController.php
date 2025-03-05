@@ -9,6 +9,8 @@ use Crater\Models\Customer;
 use Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use ReallySimpleJWT\Token;
+
 
 class LoginController extends Controller
 {
@@ -37,9 +39,20 @@ class LoginController extends Controller
         }
 
         Auth::guard('customer')->login($user);
+        
+
+        $userId = $user->id;
+        $secret = 'sec!ReT423*&';
+        $expiration = time() + 3600;
+        $issuer = 'aditum.be';
+
+       $token = Token::create($userId, $secret, $expiration, $issuer);
+
+        
 
         return response()->json([
-            'success' => true
+            'success' => true,
+            'token' => $token
         ]);
     }
 }
