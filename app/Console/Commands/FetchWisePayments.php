@@ -58,7 +58,8 @@ class FetchWisePayments extends Command
         );
 
         if (! $response->successful()) {
-            Log::error('FetchWisePayments: Token request failed.', ['body' => $response->body()]);
+            Log::error('FetchWisePayments: Token request failed.', ['status' => $response->status(), 'body' => $response->body()]);
+            $this->error('Token error '.$response->status().': '.$response->body());
             return null;
         }
 
@@ -73,7 +74,7 @@ class FetchWisePayments extends Command
         $since = Carbon::now()->subDays(2)->toIso8601String();
 
         $filter = urlencode(
-            "isRead eq false and from/emailAddress/address eq 'no-reply@wise.com' and receivedDateTime ge {$since}"
+            "isRead eq false and startsWith(subject, 'Money received') and receivedDateTime ge {$since}"
         );
 
         $url = "https://graph.microsoft.com/v1.0/users/{$mailbox}/messages?\$filter={$filter}&\$select=id,subject,body,from,receivedDateTime&\$top=50";
@@ -90,76 +91,93 @@ class FetchWisePayments extends Command
 
     private function processMessage(array $message, string $token): void
     {
-        $body = strip_tags($message['body']['content'] ?? '');
+        // Convert HTML body to plain text
+        $html = $message['body']['content'] ?? '';
+        $body = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $body = preg_replace('/[ \t]+/', ' ', $body);
+        $body = preg_replace('/\n{3,}/', "\n\n", $body);
+
         $messageId = $message['id'];
-        $subject = $message['subject'] ?? '';
+        $subject   = $message['subject'] ?? '';
 
         $this->info("Processing: {$subject}");
 
-        // Extract invoice number from email body — looks for patterns like INV-0001 or invoice number followed by digits
-        $invoiceNumber = $this->extractInvoiceNumber($body, $subject);
+        // Extract reference number between "Reference:" and "Transfer Number:"
+        $reference = $this->extractReference($body);
 
-        if (! $invoiceNumber) {
-            Log::info('FetchWisePayments: No invoice number found.', ['subject' => $subject]);
-            $this->warn("No invoice number found in: {$subject}");
+        if (! $reference) {
+            Log::info('FetchWisePayments: No reference found.', ['subject' => $subject]);
+            $this->warn("No reference found in: {$subject}");
             $this->markEmailAsRead($messageId, $token);
             return;
         }
 
-        $invoice = Invoice::where('invoice_number', $invoiceNumber)
-            ->whereIn('paid_status', [Invoice::STATUS_UNPAID, Invoice::STATUS_PARTIALLY_PAID])
-            ->first();
+        // Strip last 2 control digits to get the invoice number digits
+        $invoiceDigits = substr($reference, 0, -2);
+
+        $invoice = $this->findInvoice($invoiceDigits);
 
         if (! $invoice) {
-            Log::info('FetchWisePayments: No matching unpaid invoice found.', ['invoice_number' => $invoiceNumber]);
-            $this->warn("No unpaid invoice found for: {$invoiceNumber}");
+            Log::info('FetchWisePayments: No matching unpaid invoice.', ['reference' => $reference, 'digits' => $invoiceDigits]);
+            $this->warn("No unpaid invoice matched reference digits: {$invoiceDigits}");
             $this->markEmailAsRead($messageId, $token);
             return;
         }
 
-        $amount = $this->extractAmount($body);
-
-        if (! $amount) {
-            // Fall back to full invoice amount
-            $amount = $invoice->due_amount;
-        }
+        $amount = $this->extractAmount($body) ?? $invoice->due_amount;
 
         $this->recordPayment($invoice, $amount);
         $this->markEmailAsRead($messageId, $token);
 
-        $this->info("Invoice {$invoiceNumber} marked as paid (amount: {$amount}).");
-        Log::info('FetchWisePayments: Invoice marked paid.', ['invoice_number' => $invoiceNumber, 'amount' => $amount]);
+        $this->info("Invoice {$invoice->invoice_number} marked as paid (amount: {$amount}).");
+        Log::info('FetchWisePayments: Invoice marked paid.', [
+            'invoice_number' => $invoice->invoice_number,
+            'reference'      => $reference,
+            'amount'         => $amount,
+        ]);
     }
 
-    private function extractInvoiceNumber(string $body, string $subject): ?string
+    private function extractReference(string $body): ?string
     {
-        $text = $subject . ' ' . $body;
-
-        // Match patterns like INV-0001, INV0001, or a bare reference number
-        if (preg_match('/\b(INV[-\s]?\d+)\b/i', $text, $matches)) {
-            return strtoupper(preg_replace('/\s+/', '', $matches[1]));
-        }
-
-        // Match "reference: XXX" or "ref: XXX" or "invoice number: XXX"
-        if (preg_match('/(?:reference|ref|invoice\s+(?:number|no\.?|#))[:\s]+([A-Z0-9\-]+)/i', $text, $matches)) {
-            return strtoupper(trim($matches[1]));
+        // Match the number that sits between "Reference:" and "Transfer Number:"
+        if (preg_match('/Reference:\s*(\d+)\s*Transfer\s+Number:/is', $body, $matches)) {
+            return trim($matches[1]);
         }
 
         return null;
+    }
+
+    private function findInvoice(string $invoiceDigits): ?Invoice
+    {
+        $stripped = ltrim($invoiceDigits, '0');
+
+        return Invoice::whereIn('paid_status', [Invoice::STATUS_UNPAID, Invoice::STATUS_PARTIALLY_PAID])
+            ->get()
+            ->first(function (Invoice $invoice) use ($stripped) {
+                $invoiceNum = ltrim(preg_replace('/\D/', '', $invoice->invoice_number), '0');
+                return $invoiceNum === $stripped;
+            });
     }
 
     private function extractAmount(string $body): ?float
     {
-        // Match currency amounts like "EUR 1,234.56" or "1234.56 EUR" or "€1234.56"
-        if (preg_match('/(?:EUR|€|USD|\$|GBP|£)\s*([\d,]+\.?\d*)/i', $body, $matches)) {
-            return (float) str_replace(',', '', $matches[1]);
-        }
-
-        if (preg_match('/([\d,]+\.?\d*)\s*(?:EUR|€|USD|\$|GBP|£)/i', $body, $matches)) {
-            return (float) str_replace(',', '', $matches[1]);
+        // Match "You received 80 EUR from ..."
+        if (preg_match('/You\s+received\s+([\d.,]+)\s*(EUR|USD|GBP|€|\$|£)\s+from/i', $body, $matches)) {
+            return $this->parseAmount($matches[1]);
         }
 
         return null;
+    }
+
+    private function parseAmount(string $raw): float
+    {
+        // European format: 1.234,56 → 1234.56
+        if (preg_match('/^\d{1,3}(\.\d{3})+(,\d+)?$/', $raw)) {
+            return (float) str_replace(['.', ','], ['', '.'], $raw);
+        }
+
+        // US format: 1,234.56 → 1234.56
+        return (float) str_replace(',', '', $raw);
     }
 
     private function recordPayment(Invoice $invoice, float $amount): void
