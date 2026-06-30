@@ -65,4 +65,11 @@ return [
     'cron_job' => [
         'auth_token' => env('CRON_JOB_AUTH_TOKEN', 0)
     ],
+
+    'microsoft' => [
+        'tenant_id'     => env('MICROSOFT_TENANT_ID'),
+        'client_id'     => env('MICROSOFT_CLIENT_ID'),
+        'client_secret' => env('MICROSOFT_CLIENT_SECRET'),
+        'mailbox'       => env('MICROSOFT_MAILBOX', 'mail@simson.one'),
+    ],
 ];

@@ -36,6 +36,9 @@ class Kernel extends ConsoleKernel
             $schedule->command('check:estimates:status')
             ->daily();
 
+            $schedule->command('fetch:wise:payments')
+            ->everyFifteenMinutes();
+
             $recurringInvoices = RecurringInvoice::where('status', 'ACTIVE')->get();
             foreach ($recurringInvoices as $recurringInvoice) {
                 $timeZone = CompanySetting::getSetting('time_zone', $recurringInvoice->company_id);
