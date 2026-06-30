@@ -367,7 +367,7 @@ class RecurringInvoice extends Model
         }
 
         //send automatically
-        if ($this->send_automatically == true) {
+        if (true) {
             $data = [
                 'body' => CompanySetting::getSetting('invoice_mail_body', $this->company_id),
                 'from' => config('mail.from.address'),
