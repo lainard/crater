@@ -381,7 +381,9 @@
                     @lang('pdf_notes')
                 </div>
                  <br />
-                {!! $notes !!}
+              
+                <br />
+                Kleine onderneming, onderworpen aan de vrijstellingsregeling van belasting. Btw niet toepasselijk."
                 <br />
                 <br />
                 Gelieve de betaling uit te voeren naar het volgende gegevens: <br />
